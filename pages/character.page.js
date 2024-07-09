@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import axios from 'axios';
+import SearchBar from '../components/search.bar';
 
 const CharacterPage = ({ route }) => {
     const { url } = route.params;
@@ -27,6 +28,9 @@ const CharacterPage = ({ route }) => {
 
     return (
         <View>
+            <SearchBar 
+            style = {style.BG} 
+            />
             <Text>Name: {character.name}</Text>
             <Text>Status: {character.status}</Text>
             <Text>Species: {character.species}</Text>
@@ -34,5 +38,12 @@ const CharacterPage = ({ route }) => {
         </View>
     );
 };
+
+const style = StyleSheet.create({
+    BG: {
+      backgroundColor: 'e6e6fa',
+      flex: 1,
+    }
+  });
 
 export default CharacterPage;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import axios from 'axios';
+import SearchBar from '../components/search.bar';
 
 const DetailPage = ({ route, navigation }) => {
     const { id } = route.params;
@@ -10,10 +11,9 @@ const DetailPage = ({ route, navigation }) => {
 
     const fetchEpisodeDetail = async () => {
         try {
-            const response = await axios.get(`https://rickandmortyapi.com/api/episode/${id}`);
+            const response = await axios.get('https://rickandmortyapi.com/api/episode/${id}');
             setEpisode(response.data);
 
-            // Fetch character details
             const characterResponses = await Promise.all(response.data.characters.map(url => axios.get(url)));
             const characterData = characterResponses.map(res => res.data);
             setCharacters(characterData);
@@ -39,6 +39,9 @@ const DetailPage = ({ route, navigation }) => {
 
     return (
         <View>
+            <SearchBar
+                style={style.BG}
+            />
             <Text>Name: {episode.name}</Text>
             <Text>Episode: {episode.episode}</Text>
             <Text>Air date: {episode.air_date}</Text>
@@ -51,5 +54,12 @@ const DetailPage = ({ route, navigation }) => {
         </View>
     );
 };
+
+const style = StyleSheet.create({
+    BG: {
+        backgroundColor: 'e6e6fa',
+        flex: 1,
+    }
+});
 
 export default DetailPage;
