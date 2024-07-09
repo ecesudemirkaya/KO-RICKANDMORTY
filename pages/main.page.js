@@ -1,21 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import SearchBar from '../components/search.bar';
+import Pagination from '../components/pagination';
 
 const MainPage = ({ navigation }) => {
   const [episodes, setEpisodes] = useState([]);
-  const [page, setPage] = useState(1);
+  const [filteredEpisodes, setFilteredEpisodes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [allLoaded, setAllLoaded] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchEpisodes = async () => {
+  const fetchEpisodes = async (page) => {
     if (loading || allLoaded) return;
 
     setLoading(true);
     try {
       const response = await axios.get(`https://rickandmortyapi.com/api/episode?page=${page}`);
-      setEpisodes(prevEpisodes => [...prevEpisodes, ...response.data.results]);
+      const newEpisodes = response.data.results;
+      setEpisodes(prevEpisodes => [...prevEpisodes, ...newEpisodes]);
+
+      if (searchTerm) {
+        setFilteredEpisodes([
+          ...episodes,
+          ...newEpisodes.filter(episode =>
+            episode.name.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        ]);
+      } else {
+        setFilteredEpisodes(prevEpisodes => [...prevEpisodes, ...newEpisodes]);
+      }
 
       if (response.data.info.next === null) {
         setAllLoaded(true);
@@ -27,13 +41,18 @@ const MainPage = ({ navigation }) => {
   };
 
   useEffect(() => {
-    fetchEpisodes();
-  }, [page]);
-
-  const loadMoreEpisodes = () => {
-    if (!loading && !allLoaded) {
-      setPage(prevPage => prevPage + 1);
+    if (searchTerm) {
+      const filtered = episodes.filter(episode =>
+        episode.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredEpisodes(filtered);
+    } else {
+      setFilteredEpisodes(episodes);
     }
+  }, [searchTerm, episodes]);
+
+  const handleSearch = (text) => {
+    setSearchTerm(text);
   };
 
   const renderEpisode = ({ item }) => (
@@ -43,17 +62,14 @@ const MainPage = ({ navigation }) => {
   );
 
   return (
-    <View>
-      <SearchBar
-        style={style.BG}
-      />
-      <FlatList
-        data={episodes}
+    <View style={style.BG}>
+      <SearchBar onSearch={handleSearch} />
+      <Pagination
+        data={filteredEpisodes}
         renderItem={renderEpisode}
-        keyExtractor={(item) => item.id.toString()}
-        onEndReached={loadMoreEpisodes}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={loading ? <Text>Loading...</Text> : null}
+        fetchMoreData={fetchEpisodes}
+        loading={loading}
+        allLoaded={allLoaded}
       />
     </View>
   );
@@ -61,7 +77,7 @@ const MainPage = ({ navigation }) => {
 
 const style = StyleSheet.create({
   BG: {
-    backgroundColor: 'e6e6fa',
+    backgroundColor: '#e6e6fa',
     flex: 1,
   }
 });
