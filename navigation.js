@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import MainPage from './pages/main.page';
 import DetailPage from './pages/detail.page';
 import CharacterPage from './pages/character.page';
+import FavoriteCharactersPage from './pages/fav.char';
 
 const Stack = createStackNavigator();
 
@@ -14,6 +15,7 @@ const App = () => {
                 <Stack.Screen name="MainPage" component={MainPage} options={{ title: 'Rick and Morty Episodes' }} />
                 <Stack.Screen name="DetailPage" component={DetailPage} options={{ title: 'Episode Details' }} />
                 <Stack.Screen name="CharacterPage" component={CharacterPage} options={{ title: 'Character Details' }} />
+                <Stack.Screen name="FavoriteCharactersPage" component={FavoriteCharactersPage} options={{ title: 'Favorite Characters' }} />
             </Stack.Navigator>
         </NavigationContainer>
     );

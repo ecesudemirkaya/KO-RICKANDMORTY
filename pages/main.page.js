@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import axios from 'axios';
+import Icon from 'react-native-vector-icons/Ionicons';
 import SearchBar from '../components/search.bar';
-import Pagination from '../components/pagination';
 
 const MainPage = ({ navigation }) => {
   const [episodes, setEpisodes] = useState([]);
@@ -10,6 +10,7 @@ const MainPage = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [allLoaded, setAllLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
 
   const fetchEpisodes = async (page) => {
     if (loading || allLoaded) return;
@@ -18,21 +19,22 @@ const MainPage = ({ navigation }) => {
     try {
       const response = await axios.get(`https://rickandmortyapi.com/api/episode?page=${page}`);
       const newEpisodes = response.data.results;
-      setEpisodes(prevEpisodes => [...prevEpisodes, ...newEpisodes]);
+
+      setEpisodes((prevEpisodes) => [...prevEpisodes, ...newEpisodes]);
 
       if (searchTerm) {
-        setFilteredEpisodes([
-          ...episodes,
-          ...newEpisodes.filter(episode =>
-            episode.name.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-        ]);
+        const filteredNewEpisodes = newEpisodes.filter((episode) =>
+          episode.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredEpisodes((prevEpisodes) => [...prevEpisodes, ...filteredNewEpisodes]);
       } else {
-        setFilteredEpisodes(prevEpisodes => [...prevEpisodes, ...newEpisodes]);
+        setFilteredEpisodes((prevEpisodes) => [...prevEpisodes, ...newEpisodes]);
       }
 
       if (response.data.info.next === null) {
         setAllLoaded(true);
+      } else {
+        setPage(page + 1);
       }
     } catch (error) {
       console.error(error);
@@ -41,8 +43,12 @@ const MainPage = ({ navigation }) => {
   };
 
   useEffect(() => {
+    fetchEpisodes(page);
+  }, []);
+
+  useEffect(() => {
     if (searchTerm) {
-      const filtered = episodes.filter(episode =>
+      const filtered = episodes.filter((episode) =>
         episode.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredEpisodes(filtered);
@@ -56,30 +62,58 @@ const MainPage = ({ navigation }) => {
   };
 
   const renderEpisode = ({ item }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('DetailPage', { id: item.id })}>
+    <TouchableOpacity onPress={() => navigation.navigate('DetailPage', { id: item.id })} style={styles.tinyContainer}>
       <Text>{item.name}</Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={style.BG}>
-      <SearchBar onSearch={handleSearch} />
-      <Pagination
+    <View style={styles.BG}>
+      <View style={styles.searchBarContainer}>
+        <SearchBar onSearch={handleSearch} />
+      </View>
+      <FlatList
         data={filteredEpisodes}
         renderItem={renderEpisode}
-        fetchMoreData={fetchEpisodes}
-        loading={loading}
-        allLoaded={allLoaded}
+        keyExtractor={(item) => item.id.toString()}
+        onEndReached={() => fetchEpisodes(page)}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loading ? <Text>Loading...</Text> : null}
       />
+      <TouchableOpacity style={styles.favButton} onPress={() => navigation.navigate('FavoriteCharactersPage')}>
+        <Icon name="heart" size={40} color="blue" />
+      </TouchableOpacity>
     </View>
   );
 };
 
-const style = StyleSheet.create({
+const styles = StyleSheet.create({
   BG: {
     backgroundColor: '#e6e6fa',
     flex: 1,
-  }
+  },
+  searchBarContainer: {
+    marginBottom: 20, // Boşluk ekledik
+  },
+  favButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'white',
+    borderRadius: 50,
+    padding: 10,
+    elevation: 5,
+  },
+  tinyContainer: {
+    backgroundColor: 'white',
+    padding: 12,
+    marginBottom: 8,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
 });
 
 export default MainPage;

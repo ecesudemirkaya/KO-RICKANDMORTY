@@ -28,10 +28,12 @@ const CharacterPage = ({ route }) => {
     return (
         <View
             style={style.BG}>
+            <View style={style.infoContainer}>
             <Text>Name: {character.name}</Text>
             <Text>Status: {character.status}</Text>
             <Text>Species: {character.species}</Text>
             <Text>Gender: {character.gender}</Text>
+        </View>
         </View>
     );
 };
@@ -40,7 +42,15 @@ const style = StyleSheet.create({
     BG: {
         backgroundColor: '#E6E6FA',
         flex: 1,
-    }
+    },
+    infoContainer: {
+        backgroundColor: 'white',
+        padding: 12,
+        marginTop: 20,
+        marginBottom: 20,
+        borderRadius: 8,
+        marginHorizontal: 16,
+    },
 });
 
 export default CharacterPage;
