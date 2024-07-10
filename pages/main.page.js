@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchBarContainer: {
-    marginBottom: 20, // Boşluk ekledik
+    marginBottom: 20, 
   },
   favButton: {
     position: 'absolute',

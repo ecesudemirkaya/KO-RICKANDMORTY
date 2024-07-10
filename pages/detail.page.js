@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import axios from 'axios';
-import SearchBar from '../components/search.bar';
-import Pagination from '../components/pagination';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useDispatch } from 'react-redux';
+import SearchBar from '../components/search.bar';
+import { useDispatch, useSelector } from 'react-redux';
 import { addFavoriteCharacter, removeFavoriteCharacter } from '../components/fav.char.slice';
 
 const DetailPage = ({ route, navigation }) => {
@@ -16,6 +15,7 @@ const DetailPage = ({ route, navigation }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [allLoaded, setAllLoaded] = useState(false);
     const dispatch = useDispatch();
+    const favoriteCharacters = useSelector(state => state.favoriteCharacters.characters);
 
     const fetchEpisodeDetail = async () => {
         try {
@@ -23,7 +23,7 @@ const DetailPage = ({ route, navigation }) => {
             setEpisode(response.data);
 
             const characterResponses = await Promise.all(response.data.characters.map(url => axios.get(url)));
-            const characterData = characterResponses.map(res => ({ ...res.data, isFavorite: false }));
+            const characterData = characterResponses.map(res => ({ ...res.data }));
             setCharacters(characterData);
             setFilteredCharacters(characterData);
 
@@ -52,57 +52,55 @@ const DetailPage = ({ route, navigation }) => {
         }
     };
 
-    const toggleFavorite = (index, character) => {
-        const updatedCharacters = [...filteredCharacters];
-        updatedCharacters[index].isFavorite = !updatedCharacters[index].isFavorite;
-        setFilteredCharacters(updatedCharacters);
-
-        const { id, name, status, species, type, gender, origin, location, image, episode, url } = character;
-        if (character.isFavorite) {
-            dispatch(addFavoriteCharacter({ character: { id, name, status, species, type, gender, origin, location, image, episode, url } }));
+    const toggleFavorite = (character) => {
+        const isFavorite = favoriteCharacters.some(char => char.id === character.id);
+        if (isFavorite) {
+            dispatch(removeFavoriteCharacter({ characterId: character.id }));
         } else {
-            dispatch(removeFavoriteCharacter({ characterId: id }));
+            dispatch(addFavoriteCharacter({ character }));
         }
     };
-
 
     if (loading) {
         return <Text>Loading...</Text>;
     }
 
-    const renderCharacter = ({ item, index }) => (
-        <TouchableOpacity onPress={() => navigation.navigate('CharacterPage', { url: item.url })} style={style.tinyContainer}>
-            <Text>{item.name}</Text>
-            <TouchableOpacity style={style.favoriteIcon} onPress={() => toggleFavorite(index, item)}>
-                <Icon name={item.isFavorite ? 'heart' : 'heart-outline'} size={20} color={item.isFavorite ? 'red' : 'black'} />
+    const renderCharacter = ({ item }) => {
+        const isFavorite = favoriteCharacters.some(char => char.id === item.id);
+        return (
+            <TouchableOpacity onPress={() => navigation.navigate('CharacterPage', { url: item.url })} style={styles.tinyContainer}>
+                <Text>{item.name}</Text>
+                <TouchableOpacity style={styles.favoriteIcon} onPress={() => toggleFavorite(item)}>
+                    <Icon name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? 'red' : 'black'} />
+                </TouchableOpacity>
             </TouchableOpacity>
-        </TouchableOpacity>
-    );
-
+        );
+    };
 
     return (
-        <View style={style.BG}>
+        <View style={styles.BG}>
             <SearchBar onSearch={handleSearch} />
-            <View style={style.infoContainer}>
+            <View style={styles.infoContainer}>
                 <Text>Name: {episode.name}</Text>
                 <Text>Episode: {episode.episode}</Text>
                 <Text>Air date: {episode.air_date}</Text>
             </View>
-            <View style={style.charactersHeader}>
-                <Text style={style.charactersHeaderText}>Characters:</Text>
+            <View style={styles.charactersHeader}>
+                <Text style={styles.charactersHeaderText}>Characters:</Text>
             </View>
-            <Pagination
+            <FlatList
                 data={filteredCharacters}
                 renderItem={renderCharacter}
-                fetchMoreData={fetchEpisodeDetail}
-                loading={loading}
-                allLoaded={allLoaded}
+                keyExtractor={(item) => item.id.toString()}
+                onEndReached={() => fetchEpisodeDetail()}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={loading ? <Text>Loading...</Text> : null}
             />
         </View>
     );
 };
 
-const style = StyleSheet.create({
+const styles = StyleSheet.create({
     BG: {
         backgroundColor: '#e6e6fa',
         flex: 1,
@@ -117,6 +115,7 @@ const style = StyleSheet.create({
     },
     charactersHeader: {
         alignItems: 'center',
+        marginBottom: 16,
     },
     charactersHeaderText: {
         fontSize: 18,
@@ -126,6 +125,7 @@ const style = StyleSheet.create({
         backgroundColor: 'white',
         padding: 12,
         marginBottom: 8,
+        marginHorizontal: 16,
         borderRadius: 8,
         flexDirection: 'row',
         justifyContent: 'space-between',

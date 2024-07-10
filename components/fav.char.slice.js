@@ -9,7 +9,6 @@ const favoriteCharactersSlice = createSlice({
     reducers: {
         addFavoriteCharacter: (state, action) => {
             const { character } = action.payload;
-
             const existingCharacter = state.characters.find(char => char.id === character.id);
 
             if (!existingCharacter && state.characters.length < 10) {
@@ -37,3 +36,4 @@ export const { addFavoriteCharacter, removeFavoriteCharacter, setFavoriteCharact
 export default favoriteCharactersSlice.reducer;
 
 export const selectFavoriteCharacters = (state) => state.favoriteCharacters.characters;
+export const isCharacterFavorite = (state, characterId) => state.favoriteCharacters.characters.some(char => char.id === characterId);
